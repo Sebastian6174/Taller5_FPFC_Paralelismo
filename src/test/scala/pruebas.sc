@@ -17,8 +17,8 @@ val comparacionesMatrices = List(
     (m1: Matriz, m2: Matriz) => multMatrizRec(m1, m2),
     (m1: Matriz, m2: Matriz) => multMatrizRecPar(m1, m2)),
   ("Strassen vs StrassenPar",
-    (m1: Matriz, m2: Matriz) => strassenSecuencial(m1, m2),
-    (m1: Matriz, m2: Matriz) => strassenParalelo(m1, m2))
+    (m1: Matriz, m2: Matriz) => multStrassen(m1, m2),
+    (m1: Matriz, m2: Matriz) => multStrassenPar(m1, m2))
 )
 
 // Función para ejecutar una prueba completa de matrices

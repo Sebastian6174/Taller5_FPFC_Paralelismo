@@ -194,7 +194,7 @@ package object Matrices {
   }
 
   // Ejercicio 1.3.2
-  def strassenSecuencial(m1: Matriz, m2: Matriz): Matriz = {
+  def multStrassen(m1: Matriz, m2: Matriz): Matriz = {
     val n = m1.length
     if (n == 1) return Vector(Vector(m1(0)(0) * m2(0)(0)))
 
@@ -212,13 +212,13 @@ package object Matrices {
     val B22 = subMatriz(m2, mitad, mitad, mitad)
 
     // Calcular las 7 multiplicaciones de Strassen
-    val M1 = strassenSecuencial(sumMatriz(A11, A22), sumMatriz(B11, B22))
-    val M2 = strassenSecuencial(sumMatriz(A21, A22), B11)
-    val M3 = strassenSecuencial(A11, restaMatriz(B12, B22))
-    val M4 = strassenSecuencial(A22, restaMatriz(B21, B11))
-    val M5 = strassenSecuencial(sumMatriz(A11, A12), B22)
-    val M6 = strassenSecuencial(restaMatriz(A21, A11), sumMatriz(B11, B12))
-    val M7 = strassenSecuencial(restaMatriz(A12, A22), sumMatriz(B21, B22))
+    val M1 = multStrassen(sumMatriz(A11, A22), sumMatriz(B11, B22))
+    val M2 = multStrassen(sumMatriz(A21, A22), B11)
+    val M3 = multStrassen(A11, restaMatriz(B12, B22))
+    val M4 = multStrassen(A22, restaMatriz(B21, B11))
+    val M5 = multStrassen(sumMatriz(A11, A12), B22)
+    val M6 = multStrassen(restaMatriz(A21, A11), sumMatriz(B11, B12))
+    val M7 = multStrassen(restaMatriz(A12, A22), sumMatriz(B21, B22))
 
     // Calcular las submatrices resultantes
     val C11 = sumMatriz(restaMatriz(sumMatriz(M1, M4), M5), M7)
@@ -229,7 +229,7 @@ package object Matrices {
     combMatrices(C11, C12, C21, C22)
   }
   // Ejercicio 1.3.3
-  def strassenParalelo(m1: Matriz, m2: Matriz): Matriz = {
+  def multStrassenPar(m1: Matriz, m2: Matriz): Matriz = {
     val n = m1.length
     if (n == 1) return Vector(Vector(m1(0)(0) * m2(0)(0)))
 
@@ -260,20 +260,20 @@ package object Matrices {
       )
     )
 
-    // Otras sumas/restas (secuencial o con task)
+    // Otras sumas/restas
     val restaA21A11 = restaMatriz(A21, A11)
     val sumB11B12 = sumMatriz(B11, B12)
     val restaA12A22 = restaMatriz(A12, A22)
     val sumB21B22 = sumMatriz(B21, B22)
 
     // Multiplicaciones en paralelo (usando task)
-    val t1 = task { strassenParalelo(sumA11A22, sumB11B22) }
-    val t2 = task { strassenParalelo(sumA21A22, B11) }
-    val t3 = task { strassenParalelo(A11, restaB12B22) }
-    val t4 = task { strassenParalelo(A22, restaB21B11) }
-    val t5 = task { strassenParalelo(sumA11A12, B22) }
-    val t6 = task { strassenParalelo(restaA21A11, sumB11B12) }
-    val M7 = strassenParalelo(restaA12A22, sumB21B22) // Ejecución en hilo actual
+    val t1 = task { multStrassenPar(sumA11A22, sumB11B22) }
+    val t2 = task { multStrassenPar(sumA21A22, B11) }
+    val t3 = task { multStrassenPar(A11, restaB12B22) }
+    val t4 = task { multStrassenPar(A22, restaB21B11) }
+    val t5 = task { multStrassenPar(sumA11A12, B22) }
+    val t6 = task { multStrassenPar(restaA21A11, sumB11B12) }
+    val M7 = multStrassenPar(restaA12A22, sumB21B22) // Ejecución en hilo actual
 
     val M1 = t1.join()
     val M2 = t2.join()
