@@ -100,7 +100,7 @@ package object Matrices {
       val m1_21 = subMatriz(m1, mitad, 0, mitad)
       val m1_22 = subMatriz(m1, mitad, mitad, mitad)
 
-      // Extraemos las submatrices de B
+      // Extraemos las submatrices de m2
       val m2_11 = subMatriz(m2, 0, 0, mitad)
       val m2_12 = subMatriz(m2, 0, mitad, mitad)
       val m2_21 = subMatriz(m2, mitad, 0, mitad)
@@ -109,7 +109,7 @@ package object Matrices {
       // Calculamos las submatrices de C recursivamente
       val c11 = sumMatriz(
         multMatrizRec(m1_11, m2_11),
-        multMatrizRec(m1_12, m2_12))
+        multMatrizRec(m1_12, m2_21))
 
       val c12 = sumMatriz(
         multMatrizRec(m1_11, m2_12),
@@ -128,50 +128,62 @@ package object Matrices {
     }
   }
 
-  // Ejercicio 1.2.4
   def multMatrizRecPar(m1: Matriz, m2: Matriz): Matriz = {
     val n = m1.length
+    val umbral = 1
 
-    if (n == 1) {
-      Vector(Vector(m1(0)(0) * m2(0)(0)))
+    if (n <= umbral) {
+      multMatrizRec(m1, m2)
     } else {
       val mitad = n / 2
 
-      // Extracción de submatrices
-      val (m1_11, m1_12, m1_21, m1_22) = (
-        subMatriz(m1, 0, 0, mitad),
-        subMatriz(m1, 0, mitad, mitad),
-        subMatriz(m1, mitad, 0, mitad),
-        subMatriz(m1, mitad, mitad, mitad)
-      )
+      // Dividir matrices en submatrices
+      val A11 = subMatriz(m1, 0, 0, mitad)
+      val A12 = subMatriz(m1, 0, mitad, mitad)
+      val A21 = subMatriz(m1, mitad, 0, mitad)
+      val A22 = subMatriz(m1, mitad, mitad, mitad)
 
-      val (m2_11, m2_12, m2_21, m2_22) = (
-        subMatriz(m2, 0, 0, mitad),
-        subMatriz(m2, 0, mitad, mitad),
-        subMatriz(m2, mitad, 0, mitad),
-        subMatriz(m2, mitad, mitad, mitad)
-      )
+      val B11 = subMatriz(m2, 0, 0, mitad)
+      val B12 = subMatriz(m2, 0, mitad, mitad)
+      val B21 = subMatriz(m2, mitad, 0, mitad)
+      val B22 = subMatriz(m2, mitad, mitad, mitad)
 
-      // Multiplicaciones en paralelo (8 operaciones simultáneas)
-      val ((c11_1, c11_2), (c12_1, c12_2), (c21_1, c21_2), (c22_1, c22_2)) =
+      // Multiplicaciones en paralelo
+      val t1 = task { multMatrizRecPar(A11, B11) }
+      val t2 = task { multMatrizRecPar(A12, B21) }
+      val t3 = task { multMatrizRecPar(A11, B12) }
+      val t4 = task { multMatrizRecPar(A12, B22) }
+      val t5 = task { multMatrizRecPar(A21, B11) }
+      val t6 = task { multMatrizRecPar(A22, B21) }
+      val t7 = task { multMatrizRecPar(A21, B12) }
+      val t8 = task { multMatrizRecPar(A22, B22) }
+
+      val m1b1 = t1.join()
+      val m1b2 = t2.join()
+      val m2b1 = t3.join()
+      val m2b2 = t4.join()
+      val m3b1 = t5.join()
+      val m3b2 = t6.join()
+      val m4b1 = t7.join()
+      val m4b2 = t8.join()
+
+      // Calcular sumas en paralelo
+      val ((c11, c12), (c21, c22)) = parallel(
         parallel(
-          parallel(multMatrizRecPar(m1_11, m2_11), multMatrizRecPar(m1_12, m2_21)),
-          parallel(multMatrizRecPar(m1_11, m2_12), multMatrizRecPar(m1_12, m2_22)),
-          parallel(multMatrizRecPar(m1_21, m2_11), multMatrizRecPar(m1_22, m2_21)),
-          parallel(multMatrizRecPar(m1_21, m2_12), multMatrizRecPar(m1_22, m2_22))
+          sumMatriz(m1b1, m1b2),
+          sumMatriz(m2b1, m2b2)
+        ),
+        parallel(
+          sumMatriz(m3b1, m3b2),
+          sumMatriz(m4b1, m4b2)
         )
-
-      // Sumas en paralelo (4 operaciones simultáneas)
-      val (c11, c12, c21, c22) = parallel(
-        sumMatriz(c11_1, c11_2),
-        sumMatriz(c12_1, c12_2),
-        sumMatriz(c21_1, c21_2),
-        sumMatriz(c22_1, c22_2)
       )
 
       combMatrices(c11, c12, c21, c22)
     }
   }
+
+
 
   // Ejercicio 1.3.1
   def restaMatriz(m1: Matriz, m2: Matriz): Matriz = {
@@ -209,10 +221,10 @@ package object Matrices {
     val M7 = strassenSecuencial(restaMatriz(A12, A22), sumMatriz(B21, B22))
 
     // Calcular las submatrices resultantes
-    val C11 = sumMatriz(restaMatriz(sumMatriz(M1, M4), M7), M5)
+    val C11 = sumMatriz(restaMatriz(sumMatriz(M1, M4), M5), M7)
     val C12 = sumMatriz(M3, M5)
     val C21 = sumMatriz(M2, M4)
-    val C22 = sumMatriz(restaMatriz(sumMatriz(M1, M3), M2), M6)
+    val C22 = sumMatriz(sumMatriz(restaMatriz(M1, M2), M3), M6)
 
     combMatrices(C11, C12, C21, C22)
   }
@@ -234,7 +246,7 @@ package object Matrices {
     val B21 = subMatriz(m2, mitad, 0, mitad)
     val B22 = subMatriz(m2, mitad, mitad, mitad)
 
-    // Precalcular sumas/restas en paralelo (2 grupos)
+    // Precalcular sumas/restas en paralelo
     val (sumA11A22, (sumB11B22, sumA21A22), restaB12B22, (restaB21B11, sumA11A12)) = parallel(
       sumMatriz(A11, A22),
       parallel(
@@ -273,14 +285,15 @@ package object Matrices {
     // Calcular submatrices resultantes en paralelo
     val ((c11, c12), (c21, c22)) = parallel(
       parallel(
-        sumMatriz(restaMatriz(sumMatriz(M1, M4), M7), M5),
+        sumMatriz(restaMatriz(sumMatriz(M1, M4), M5), M7),
         sumMatriz(M3, M5)
       ),
       parallel(
         sumMatriz(M2, M4),
-        sumMatriz(restaMatriz(sumMatriz(M1, M3), M2), M6)
+        sumMatriz(sumMatriz(restaMatriz(M1, M2), M3), M6)
       )
     )
+
     combMatrices(c11, c12, c21, c22)
   }
 }

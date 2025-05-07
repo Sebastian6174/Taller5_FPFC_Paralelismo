@@ -1,22 +1,22 @@
 import Matrices._
 import scala.collection.parallel.CollectionConverters._
 import org.scalameter._
-
 package object Benchmark {
+
   type AlgoritmoMult = (Matriz, Matriz) => Matriz
 
 
   def compararAlgoritmos(a1:AlgoritmoMult, a2:AlgoritmoMult)
                         (m1:Matriz, m2:Matriz):(Double,Double, Double) = {
     val timeA1 = config(
-      KeyValue(Key.exec.minWarmupRuns -> 20),
-      KeyValue(Key.exec.maxWarmupRuns -> 60),
+      KeyValue(Key.exec.minWarmupRuns -> 2),
+      KeyValue(Key.exec.maxWarmupRuns -> 5),
       KeyValue(Key.verbose -> false)
     ) withWarmer(new Warmer.Default) measure (a1(m1,m2))
 
     val timeA2 = config(
-      KeyValue(Key.exec.minWarmupRuns -> 20),
-      KeyValue(Key.exec.maxWarmupRuns -> 60),
+      KeyValue(Key.exec.minWarmupRuns -> 2),
+      KeyValue(Key.exec.maxWarmupRuns -> 5),
       KeyValue(Key.verbose -> false)
     ) withWarmer(new Warmer.Default) measure (a2(m1,m2))
 
@@ -24,8 +24,7 @@ package object Benchmark {
     (timeA1.value, timeA2.value, speedUp)
   }
 
-
-  def compararMultMatriz(n:Int) = {
+  /* def compararMultMatriz(n:Int) = {
     // Para probar con paralelismo de datos
     val m1= matrizAlAzar(n,2)
     val m2= matrizAlAzar(n,2)
@@ -41,10 +40,10 @@ package object Benchmark {
       KeyValue(Key.exec.minWarmupRuns -> 20),
       KeyValue(Key.exec.maxWarmupRuns -> 60),
       KeyValue(Key.verbose -> false)
-    ) withWarmer(new Warmer.Default) measure {multMatrizParD(m1parD,m2parD)}
+    ) withWarmer(new Warmer.Default) measure {multMatrizPar(m1parD,m2parD)}
     val speedUp= timeA1.value/timeA2.value
     (timeA1.value, timeA2.value, speedUp)
-  }
+  } */
 
   def compararProdPunto(n:Int) = {
     // Para probar con paralelismo de datos
