@@ -1,8 +1,3 @@
-import Matrices._
-import scala.collection.parallel.immutable.ParVector
-import common._
-import Benchmark._
-
 // Configuración de pruebas
 val maxExponentMatrices = 9  // Máxima potencia de 2 para matrices
 val maxExponentVectores = 6   // Máxima potencia de 10 para vectores
@@ -17,8 +12,8 @@ val comparacionesMatrices = List(
     (m1: Matriz, m2: Matriz) => multMatrizRec(m1, m2),
     (m1: Matriz, m2: Matriz) => multMatrizRecPar(m1, m2)),
   ("Strassen vs StrassenPar",
-    (m1: Matriz, m2: Matriz) => multStrassen(m1, m2),
-    (m1: Matriz, m2: Matriz) => multStrassenPar(m1, m2))
+    (m1: Matriz, m2: Matriz) => strassenSecuencial(m1, m2),
+    (m1: Matriz, m2: Matriz) => strassenParalelo(m1, m2))
 )
 
 // Función para ejecutar una prueba completa de matrices
@@ -31,7 +26,9 @@ def ejecutarPruebaMatrices() = {
     m2 = matrizAlAzar(dim, 2)
   } yield {
     println(s"\nProbando matrices ${dim}x${dim}...")
-    val comparaciones = comparacionesMatrices.map { case (nombre, a1, a2) =>
+    val comparaciones = for {
+      (nombre, a1, a2) <- comparacionesMatrices
+    } yield {
       val (t1, t2, speedup) = compararAlgoritmos(a1, a2)(m1, m2)
       (nombre, t1, t2, speedup)
     }
@@ -40,9 +37,13 @@ def ejecutarPruebaMatrices() = {
 
   // Imprimir resultados
   println("\n===== RESULTADOS MATRICES =====")
-  resultadosMatrices.foreach { case (dim, comps) =>
+  for {
+    (dim, comps) <- resultadosMatrices
+  } yield {
     println(s"\nDimensión ${dim}x${dim}:")
-    comps.foreach { case (nombre, t1, t2, speedup) =>
+    for {
+      (nombre, t1, t2, speedup) <- comps
+    } yield {
       println(f"$nombre%25s: Secuencial ${t1}%8.4f ms | Paralelo ${t2}%8.4f ms | Speedup ${speedup}%4.2fx")
     }
   }
@@ -66,7 +67,9 @@ def ejecutarPruebaPunto() = {
 
   // Imprimir resultados
   println("\n===== RESULTADOS PRODUCTO PUNTO =====")
-  resultadosPunto.foreach { case (dim, t1, t2, speedup) =>
+  for {
+    (dim, t1, t2, speedup) <- resultadosPunto
+  } yield {
     println(f"Tamaño $dim%8d: Secuencial ${t1}%8.4f ms | Paralelo ${t2}%8.4f ms | Speedup ${speedup}%4.2fx")
   }
 
@@ -78,16 +81,18 @@ println("Iniciando pruebas con " + numRepeticiones + " repeticiones para cada al
 
 // Repeticiones para matrices
 println("EJECUTANDO PRUEBAS DE MATRICES")
-for (i <- 1 to numRepeticiones) {
+val resultadosMatrices = for {
+  i <- 1 to numRepeticiones
+} yield {
   println(s"\n=== REPETICIÓN $i DE $numRepeticiones PARA MATRICES ===")
-  val resultados = ejecutarPruebaMatrices()
+  ejecutarPruebaMatrices()
 }
 
 // Repeticiones para producto punto
 println("\nEJECUTANDO PRUEBAS DE PRODUCTO PUNTO")
-for (i <- 1 to numRepeticiones) {
+val resultadosPunto = for {
+  i <- 1 to numRepeticiones
+} yield {
   println(s"\n=== REPETICIÓN $i DE $numRepeticiones PARA PRODUCTO PUNTO ===")
-  val resultados = ejecutarPruebaPunto()
+  ejecutarPruebaPunto()
 }
-
-println("\nTodas las pruebas han finalizado.")
